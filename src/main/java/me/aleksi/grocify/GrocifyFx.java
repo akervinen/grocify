@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -117,6 +118,15 @@ public class GrocifyFx extends Application {
         table.getColumns().add(nameCol);
         table.getColumns().add(amountCol);
         table.getColumns().add(priceCol);
+
+        table.setOnKeyPressed(t -> {
+            if (t.getCode() == KeyCode.DELETE) {
+                var idx = table.getSelectionModel().getSelectedIndex();
+                if (idx >= 0) {
+                    data.remove(idx);
+                }
+            }
+        });
 
         table.setOnDragOver(e -> {
             if (e.getGestureSource() != table && e.getDragboard().hasFiles()) {
