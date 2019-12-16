@@ -60,7 +60,7 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     public void cancelEdit() {
         super.cancelEdit();
 
-        setText(getItem() == null ? "" : String.valueOf(getItem()));
+        setText(getString());
         setContentDisplay(ContentDisplay.TEXT_ONLY);
         textField.setText(getString());
     }

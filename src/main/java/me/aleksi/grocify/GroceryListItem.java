@@ -67,7 +67,7 @@ public class GroceryListItem {
      *
      * @param amount a int.
      */
-    public void setAmount(int amount) {
+    public void setAmount(Integer amount) {
         this.amount = amount;
     }
 
