@@ -10,6 +10,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -32,11 +33,9 @@ import java.text.ParsePosition;
  * @version 1.0-SNAPSHOT
  */
 public class GrocifyFx extends Application {
-    private TableView<GroceryListItem> table = new TableView<>();
-    private ObservableList<GroceryListItem> data = FXCollections.observableArrayList(
-        new GroceryListItem("Milk", 2, new BigDecimal("1.5")),
-        new GroceryListItem("Bread"));
-
+    private final DecimalFormat amountFormat = new DecimalFormat("#");
+    private final DecimalFormat priceParseFormat = new DecimalFormat("#.0");
+    private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
     private FileChooser fileChooser = new FileChooser();
 
     /**
@@ -73,11 +72,30 @@ public class GrocifyFx extends Application {
         fileChooser.getExtensionFilters().add(extFilter);
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
 
+        var fileBox = buildSaveLoadBox(primaryStage);
+
+        var table = buildGroceryList();
+
+        var addBox = buildNewItemBox();
+        addBox.prefWidthProperty().bind(primaryStage.widthProperty());
+
+        var root = new VBox();
+        root.setSpacing(5);
+        root.setPadding(new Insets(10, 5, 5, 10));
+
+        root.getChildren().addAll(fileBox, table, addBox);
+
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        primaryStage.setScene(new Scene(root, 480, 640));
+        primaryStage.show();
+    }
+
+    private TableView<GroceryListItem> buildGroceryList() {
+        TableView<GroceryListItem> table = new TableView<>();
+
         table.setEditable(true);
         table.setItems(data);
-
-        final var amountFormat = new DecimalFormat("#");
-        final var priceParseFormat = new DecimalFormat("#.0");
 
         var nameCol = new TableColumn<GroceryListItem, String>("Name");
         nameCol.setEditable(true);
@@ -151,8 +169,11 @@ public class GrocifyFx extends Application {
             e.consume();
         });
 
+        return table;
+    }
+
+    private Pane buildNewItemBox() {
         var addBox = new HBox();
-        addBox.prefWidthProperty().bind(primaryStage.widthProperty());
 
         var addName = new TextField();
         var addAmount = new TextField();
@@ -194,11 +215,15 @@ public class GrocifyFx extends Application {
         addBox.getChildren().addAll(addName, addAmount, addPrice, addButton);
         addBox.setSpacing(3);
 
+        return addBox;
+    }
+
+    private Pane buildSaveLoadBox(Stage stage) {
         var fileBox = new HBox();
 
         var loadButton = new Button("Load from File");
         loadButton.setOnAction(e -> {
-            var file = fileChooser.showOpenDialog(primaryStage);
+            var file = fileChooser.showOpenDialog(stage);
             if (file != null) {
                 data.clear();
                 loadFile(file);
@@ -207,7 +232,7 @@ public class GrocifyFx extends Application {
 
         var saveButton = new Button("Save to File");
         saveButton.setOnAction(e -> {
-            var file = fileChooser.showSaveDialog(primaryStage);
+            var file = fileChooser.showSaveDialog(stage);
             if (file != null) {
                 saveToFile(file);
             }
@@ -216,16 +241,7 @@ public class GrocifyFx extends Application {
         fileBox.getChildren().addAll(loadButton, saveButton);
         fileBox.setSpacing(3);
 
-        var root = new VBox();
-        root.setSpacing(5);
-        root.setPadding(new Insets(10, 5, 5, 10));
-
-        root.getChildren().addAll(fileBox, table, addBox);
-
-        VBox.setVgrow(table, Priority.ALWAYS);
-
-        primaryStage.setScene(new Scene(root, 480, 640));
-        primaryStage.show();
+        return fileBox;
     }
 
     private boolean loadFile(File file) {
