@@ -124,17 +124,6 @@ public class GrocifyFx extends Application {
             }
         });
 
-        // Create keyboard shortcuts
-        var shortcutNew = new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN);
-        var shortcutOpen = new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN);
-        var shortcutSave = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN);
-        var shortcutSaveAs = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN);
-
-        scene.getAccelerators().put(shortcutNew, this::actionFileNew);
-        scene.getAccelerators().put(shortcutOpen, this::actionFileOpen);
-        scene.getAccelerators().put(shortcutSave, this::actionFileSave);
-        scene.getAccelerators().put(shortcutSaveAs, this::actionFileSaveAs);
-
         primaryStage.show();
     }
 
@@ -174,6 +163,11 @@ public class GrocifyFx extends Application {
         var menuOpen = new MenuItem("_Open…");
         var menuSave = new MenuItem("_Save");
         var menuSaveAs = new MenuItem("Save _As…");
+
+        menuNew.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
+        menuOpen.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
+        menuSave.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
+        menuSaveAs.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
 
         menuNew.setOnAction(e -> actionFileNew());
         menuOpen.setOnAction(e -> actionFileOpen());
