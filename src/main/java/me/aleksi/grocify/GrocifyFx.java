@@ -116,18 +116,20 @@ public class GrocifyFx extends Application {
         var tab = new Tab(name, list);
         tabPane.getTabs().add(tab);
 
+        tabPane.getSelectionModel().select(tab);
+
         return tab;
     }
 
     private MenuBar buildMenuBar() {
         var menuBar = new MenuBar();
 
-        final var fileMenu = new Menu("File");
+        final var fileMenu = new Menu("_File");
 
-        var menuNew = new MenuItem("New");
-        var menuOpen = new MenuItem("Open…");
-        var menuSave = new MenuItem("Save");
-        var menuSaveAs = new MenuItem("Save As…");
+        var menuNew = new MenuItem("_New");
+        var menuOpen = new MenuItem("_Open…");
+        var menuSave = new MenuItem("_Save");
+        var menuSaveAs = new MenuItem("Save _As…");
 
         menuNew.setOnAction(e -> actionFileNew());
         menuOpen.setOnAction(e -> actionFileOpen());
@@ -215,6 +217,8 @@ public class GrocifyFx extends Application {
     }
 
     private void actionFileSave() {
+        if (currentList == null) return;
+
         var file = currentList.getFile();
         if (file == null) {
             actionFileSaveAs();
@@ -224,6 +228,8 @@ public class GrocifyFx extends Application {
     }
 
     private void actionFileSaveAs() {
+        if (currentList == null) return;
+
         fileChooser.setInitialFileName(currentList.getName());
         if (currentList.getFile() != null) {
             fileChooser.setInitialDirectory(currentList.getFile().getParentFile());
