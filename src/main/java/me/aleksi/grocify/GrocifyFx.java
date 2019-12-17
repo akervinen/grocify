@@ -150,7 +150,13 @@ public class GrocifyFx extends Application {
                 return str;
             }
         });
-        nameCol.setOnEditCommit(cee -> cee.getTableView().getItems().get(cee.getTablePosition().getRow()).setName(cee.getNewValue()));
+        nameCol.setOnEditCommit(cee -> {
+            var item = cee.getRowValue();
+            item.setName(cee.getNewValue());
+            if (item.isEmpty()) {
+                data.remove(item);
+            }
+        });
 
         var amountCol = new TableColumn<GroceryListItem, Integer>("Amount");
         amountCol.setEditable(true);
@@ -162,7 +168,7 @@ public class GrocifyFx extends Application {
                 return str.isBlank() ? null : Integer.valueOf(str);
             }
         });
-        amountCol.setOnEditCommit(cee -> cee.getTableView().getItems().get(cee.getTablePosition().getRow()).setAmount(cee.getNewValue()));
+        amountCol.setOnEditCommit(cee -> cee.getRowValue().setAmount(cee.getNewValue()));
 
         var priceCol = new TableColumn<GroceryListItem, BigDecimal>("Price per Unit");
         priceCol.setEditable(true);
@@ -174,7 +180,7 @@ public class GrocifyFx extends Application {
                 return str.isBlank() ? null : new BigDecimal(str);
             }
         });
-        priceCol.setOnEditCommit(cee -> cee.getTableView().getItems().get(cee.getTablePosition().getRow()).setPricePerUnit(cee.getNewValue()));
+        priceCol.setOnEditCommit(cee -> cee.getRowValue().setPricePerUnit(cee.getNewValue()));
 
         table.getColumns().add(nameCol);
         table.getColumns().add(amountCol);

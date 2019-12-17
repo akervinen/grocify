@@ -36,6 +36,17 @@ public class GroceryListItem {
     }
 
     /**
+     * Check if item is completely blank.
+     *
+     * Used to determine if a row should be deleted after being edited.
+     *
+     * @return true if all properties of item are blank or null.
+     */
+    public boolean isEmpty() {
+        return (name == null || name.isEmpty()) && getAmount() == null && getPricePerUnit() == null;
+    }
+
+    /**
      * <p>Getter for the field <code>name</code>.</p>
      *
      * @return a {@link java.lang.String} object.
