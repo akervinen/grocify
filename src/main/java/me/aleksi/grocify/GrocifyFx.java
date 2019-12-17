@@ -4,6 +4,9 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -105,7 +108,20 @@ public class GrocifyFx extends Application {
         VBox.setVgrow(content, Priority.ALWAYS);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
-        primaryStage.setScene(new Scene(root, 480, 640));
+        var scene = new Scene(root, 480, 640);
+        primaryStage.setScene(scene);
+
+        // Create keyboard shortcuts
+        var shortcutNew = new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN);
+        var shortcutOpen = new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN);
+        var shortcutSave = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN);
+        var shortcutSaveAs = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN);
+
+        scene.getAccelerators().put(shortcutNew, this::actionFileNew);
+        scene.getAccelerators().put(shortcutOpen, this::actionFileOpen);
+        scene.getAccelerators().put(shortcutSave, this::actionFileSave);
+        scene.getAccelerators().put(shortcutSaveAs, this::actionFileSaveAs);
+
         primaryStage.show();
     }
 
