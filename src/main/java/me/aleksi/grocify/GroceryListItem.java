@@ -3,7 +3,7 @@ package me.aleksi.grocify;
 import java.math.BigDecimal;
 
 /**
- * <p>GroceryListItem class.</p>
+ * Grocery list item containing simple data.
  *
  * @author Aleksi Kervinen
  * @version 1.0-SNAPSHOT
@@ -14,20 +14,20 @@ public class GroceryListItem {
     private BigDecimal pricePerUnit;
 
     /**
-     * <p>Constructor for GroceryListItem.</p>
+     * Create new grocery list item with given name and no quantity or price.
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name item name
      */
     public GroceryListItem(String name) {
         this.name = name;
     }
 
     /**
-     * <p>Constructor for GroceryListItem.</p>
+     * Create new grocery list item with given name, quantity and price.
      *
-     * @param name         a {@link java.lang.String} object.
-     * @param amount       a {@link java.lang.Integer} object.
-     * @param pricePerUnit a {@link java.math.BigDecimal} object.
+     * @param name         item name
+     * @param amount       item amount
+     * @param pricePerUnit item price per unit
      */
     public GroceryListItem(String name, Integer amount, BigDecimal pricePerUnit) {
         this.name = name;
@@ -38,7 +38,7 @@ public class GroceryListItem {
     /**
      * Check if item is completely blank.
      *
-     * Used to determine if a row should be deleted after being edited.
+     * <p>Used to determine if a row should be deleted after being edited.</p>
      *
      * @return true if all properties of item are blank or null.
      */
@@ -47,54 +47,54 @@ public class GroceryListItem {
     }
 
     /**
-     * <p>Getter for the field <code>name</code>.</p>
+     * Get item name.
      *
-     * @return a {@link java.lang.String} object.
+     * @return item name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * <p>Setter for the field <code>name</code>.</p>
+     * Set item name.
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name new item name
      */
     public void setName(String name) {
         this.name = name;
     }
 
     /**
-     * <p>Getter for the field <code>amount</code>.</p>
+     * Get item amount, or null if none is set.
      *
-     * @return a {@link java.lang.Integer} object.
+     * @return item amount or null
      */
     public Integer getAmount() {
         return amount;
     }
 
     /**
-     * <p>Setter for the field <code>amount</code>.</p>
+     * Set item amount, can be null.
      *
-     * @param amount a int.
+     * @param amount new item amount, or null
      */
     public void setAmount(Integer amount) {
         this.amount = amount;
     }
 
     /**
-     * <p>Getter for the field <code>pricePerUnit</code>.</p>
+     * Get item price per unit or null if none is set.
      *
-     * @return a {@link java.math.BigDecimal} object.
+     * @return item price per unit, or null
      */
     public BigDecimal getPricePerUnit() {
         return pricePerUnit;
     }
 
     /**
-     * <p>Setter for the field <code>pricePerUnit</code>.</p>
+     * Set item price per unit, can be null.
      *
-     * @param pricePerUnit a {@link java.math.BigDecimal} object.
+     * @param pricePerUnit new price per unit, or null
      */
     public void setPricePerUnit(BigDecimal pricePerUnit) {
         this.pricePerUnit = pricePerUnit;

@@ -13,6 +13,14 @@ import javafx.scene.input.KeyCode;
 import java.io.File;
 import java.math.BigDecimal;
 
+/**
+ * TableView with additional data for working with files.
+ *
+ * <p>Keeps track of file name and whether it has been saved.</p>
+ *
+ * @author Aleksi Kervinen
+ * @version 1.0-SNAPSHOT
+ */
 public class GroceryList extends TableView<GroceryListItem> {
     private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
     private String name;
@@ -20,10 +28,18 @@ public class GroceryList extends TableView<GroceryListItem> {
 
     private ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
 
+    /**
+     * Create a new untitled GroceryList.
+     */
     public GroceryList() {
         this("Untitled");
     }
 
+    /**
+     * Create a new GroceryList with given name.
+     *
+     * @param name list name
+     */
     public GroceryList(String name) {
         this.setEditable(true);
         this.setItems(data);
@@ -86,6 +102,7 @@ public class GroceryList extends TableView<GroceryListItem> {
         this.getColumns().add(amountCol);
         this.getColumns().add(priceCol);
 
+        // Delete active row
         this.setOnKeyPressed(t -> {
             if (t.getCode() == KeyCode.DELETE) {
                 var idx = this.getSelectionModel().getSelectedIndex();
@@ -96,13 +113,26 @@ public class GroceryList extends TableView<GroceryListItem> {
             }
         });
 
+        // Set as dirty if items are added/removed.
         this.getItems().addListener((ListChangeListener<? super GroceryListItem>) e -> this.setDirty(true));
     }
 
+    /**
+     * Get list name.
+     *
+     * @return list name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Set list name.
+     *
+     * <p>File name is list name + ".json" extension.</p>
+     *
+     * @param name new list name
+     */
     public void setName(String name) {
         if (name.isEmpty()) {
             throw new IllegalArgumentException("name cannot be empty");
@@ -110,22 +140,47 @@ public class GroceryList extends TableView<GroceryListItem> {
         this.name = name;
     }
 
+    /**
+     * Get backing file for list.
+     *
+     * @return backing file or null
+     */
     public File getFile() {
         return file;
     }
 
+    /**
+     * Set backing file for list, or null to reset.
+     *
+     * @param file new file or null
+     */
     public void setFile(File file) {
         this.file = file;
     }
 
+    /**
+     * Whether list has unsaved edits.
+     *
+     * @return true if list has unsaved edits
+     */
     public boolean isDirty() {
         return dirty.get();
     }
 
+    /**
+     * Set list as dirty.
+     *
+     * @param dirty true if list has been edited
+     */
     public void setDirty(boolean dirty) {
         this.dirty.set(dirty);
     }
 
+    /**
+     * Get property for list dirtiness.
+     *
+     * @return property for {@link #isDirty()}
+     */
     public ObjectProperty<Boolean> dirtyProperty() {
         return dirty;
     }

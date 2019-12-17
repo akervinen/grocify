@@ -1,10 +1,13 @@
 package me.aleksi.grocify;
 
-import javafx.scene.control.*;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
 
 /**
- * <p>Abstract EditableCell class.</p>
+ * TableCell that can be edited.
  *
  * @author Aleksi Kervinen
  * @version 1.0-SNAPSHOT
@@ -14,7 +17,7 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     private TextFormatter<?> textFormatter;
 
     /**
-     * <p>Constructor for EditableCell.</p>
+     * Create a new EditableCell.
      */
     public EditableCell() {
         super();
@@ -22,9 +25,9 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     }
 
     /**
-     * <p>Constructor for EditableCell.</p>
+     * Create a new EditableCell with given {@link TextFormatter} to validate input.
      *
-     * @param textFormatter a {@link javafx.scene.control.TextFormatter} object.
+     * @param textFormatter a {@link javafx.scene.control.TextFormatter} for input validation
      */
     public EditableCell(TextFormatter<?> textFormatter) {
         this();
@@ -32,6 +35,8 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     }
 
     /**
+     * Called when editing starts, creates a text field and focuses it.
+     * <p>
      * {@inheritDoc}
      */
     @Override
@@ -50,6 +55,8 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     }
 
     /**
+     * Cancel editing, hides text field.
+     * <p>
      * {@inheritDoc}
      */
     @Override
@@ -62,7 +69,10 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     }
 
     /**
-     * {@inheritDoc}
+     * Update backing item with new data. Also updates text field.
+     *
+     * @param item new item for cell
+     * @param empty whether cell has no item
      */
     @Override
     protected void updateItem(T item, boolean empty) {
@@ -104,10 +114,10 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
     }
 
     /**
-     * <p>fromString.</p>
+     * Create the T object from an input string.
      *
-     * @param str a {@link java.lang.String} object.
-     * @return a T object.
+     * @param str user inputted string
+     * @return a T object from given string
      */
     protected abstract T fromString(String str);
 

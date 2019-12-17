@@ -28,6 +28,11 @@
             <artifactId>javafx-controls</artifactId>
             <version>13</version>
         </dependency>
+        <dependency>
+            <groupId>net.harawata</groupId>
+            <artifactId>appdirs</artifactId>
+            <version>1.0.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -65,17 +70,14 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
-                            <goal>copy-dependencies</goal>
+                            <goal>shade</goal>
                         </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

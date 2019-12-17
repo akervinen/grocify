@@ -16,19 +16,22 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import me.aleksi.jayson.*;
+import net.harawata.appdirs.AppDirsFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.Optional;
 
 /**
- * <p>GrocifyFx class.</p>
+ * JavaFX interface for Grocify.
  *
  * @author Aleksi Kervinen
  * @version 1.0-SNAPSHOT
@@ -36,7 +39,7 @@ import java.util.Optional;
 public class GrocifyFx extends Application {
     static final DecimalFormat FORMAT_AMOUNT = new DecimalFormat("#");
     static final DecimalFormat FORMAT_PRICE = new DecimalFormat("#.0");
-
+    private static final String SESSION_FILE_NAME = "session.json";
     private Window fileChooserOwnerWindow;
     private FileChooser fileChooser = new FileChooser();
 
@@ -52,6 +55,12 @@ public class GrocifyFx extends Application {
         launch(args);
     }
 
+    /**
+     * Get a new {@link TextFormatter} using given {@link DecimalFormat}.
+     *
+     * @param format {@link DecimalFormat} to use
+     * @return a new {@link TextFormatter}
+     */
     static TextFormatter<?> getFormatter(DecimalFormat format) {
         return new TextFormatter<>(change -> {
             if (change.getControlNewText().isEmpty())
@@ -64,6 +73,44 @@ public class GrocifyFx extends Application {
 
             return change;
         });
+    }
+
+    private void loadSettings() {
+        var appDirs = AppDirsFactory.getInstance();
+        var dataPath = appDirs.getUserDataDir("Grocify", null, null, false);
+
+        try {
+            var res = new JSONReader().parse(Files.readString(Path.of(dataPath, SESSION_FILE_NAME), StandardCharsets.UTF_8));
+
+            for (var e : res.getArray()) {
+                loadFile(new File(e.getString()), false);
+            }
+        } catch (IOException | JSONParseException | JSONTypeException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveSettings() {
+        var appDirs = AppDirsFactory.getInstance();
+
+        var arr = new JSONArray();
+        for (var tab : tabPane.getTabs()) {
+            var list = (GroceryList) tab.getContent();
+
+            if (list.getFile() != null) {
+                arr.add(list.getFile().getPath());
+            }
+        }
+
+        var dataPath = appDirs.getUserDataDir("Grocify", null, null, false);
+        //noinspection ResultOfMethodCallIgnored
+        new File(dataPath).mkdirs();
+        try (var writer = new PrintWriter(Path.of(dataPath, SESSION_FILE_NAME).toFile(), StandardCharsets.UTF_8)) {
+            writer.write(arr.toJSONString());
+        } catch (IOException e) {
+            // Silently ignore since user probably doesn't care or cannot do anything about this.
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -94,7 +141,13 @@ public class GrocifyFx extends Application {
             addBox.getChildren().get(addBox.getChildren().size() - 1).setDisable(newVal == null);
         });
 
-        addTab("Untitled");
+        // Load previous session
+        loadSettings();
+
+        // Add an empty tab if none were loaded from last session
+        if (tabPane.getTabs().size() == 0) {
+            addTab("Untitled");
+        }
 
         var root = new VBox();
 
@@ -122,6 +175,9 @@ public class GrocifyFx extends Application {
 
             if (dirty && !confirmCloseApp()) {
                 e.consume();
+            } else {
+                // Save session before quitting
+                saveSettings();
             }
         });
 
@@ -143,7 +199,7 @@ public class GrocifyFx extends Application {
             var db = e.getDragboard();
             var success = false;
             if (db.hasFiles() && db.getFiles().size() == 1) {
-                success = loadFile(db.getFiles().get(0));
+                success = loadFile(db.getFiles().get(0), true);
             }
             e.setDropCompleted(success);
             e.consume();
@@ -273,7 +329,7 @@ public class GrocifyFx extends Application {
     private void actionFileOpen() {
         var file = fileChooser.showOpenDialog(fileChooserOwnerWindow);
         if (file != null) {
-            loadFile(file);
+            loadFile(file, true);
         }
     }
 
@@ -309,7 +365,7 @@ public class GrocifyFx extends Application {
         }
     }
 
-    private boolean loadFile(File file) {
+    private boolean loadFile(File file, boolean showDialogOnError) {
         var listName = getBaseName(file);
         var list = new GroceryList(listName);
 
@@ -317,7 +373,7 @@ public class GrocifyFx extends Application {
         opts.readNumbersAsBigDecimal = true;
 
         try {
-            var res = new JSONReader(opts).parse(Files.readAllBytes(file.toPath()));
+            var res = new JSONReader(opts).parse(Files.readString(file.toPath(), StandardCharsets.UTF_8));
             for (var e : res.getArray()) {
                 var o = e.getObject();
                 var name = o.get("name").getString();
@@ -333,11 +389,13 @@ public class GrocifyFx extends Application {
             addTab(listName, list);
             return true;
         } catch (IOException | JSONParseException | JSONTypeException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Grocify");
-            alert.setHeaderText("Error reading file");
-            alert.setContentText(e.getMessage());
-            alert.show();
+            if (showDialogOnError) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Grocify");
+                alert.setHeaderText("Error reading file. Are you sure it's the correct file?");
+                alert.setContentText(e.getMessage());
+                alert.show();
+            }
             return false;
         }
     }
@@ -349,7 +407,7 @@ public class GrocifyFx extends Application {
             .put("amount", e.getAmount())
             .put("price", e.getPricePerUnit())));
 
-        try (var writer = new PrintWriter(file)) {
+        try (var writer = new PrintWriter(file, StandardCharsets.UTF_8)) {
             writer.println(arr.toJSONString());
             return true;
         } catch (IOException e) {
