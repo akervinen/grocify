@@ -177,7 +177,12 @@ public class GrocifyFx extends Application {
                 e.consume();
             } else {
                 // Save session before quitting
-                saveSettings();
+                try {
+                    saveSettings();
+                } catch (Exception ex) {
+                    // Ignore exceptions so we can quit.
+                    ex.printStackTrace();
+                }
             }
         });
 
