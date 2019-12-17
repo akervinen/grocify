@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
+import java.util.Optional;
 
 /**
  * <p>GrocifyFx class.</p>
@@ -109,6 +110,20 @@ public class GrocifyFx extends Application {
         var scene = new Scene(root, 480, 640);
         primaryStage.setScene(scene);
 
+        primaryStage.setOnCloseRequest(e -> {
+            var dirty = false;
+            for (var tab : tabPane.getTabs()) {
+                if (((GroceryList) tab.getContent()).isDirty()) {
+                    dirty = true;
+                    break;
+                }
+            }
+
+            if (dirty && !confirmCloseApp()) {
+                e.consume();
+            }
+        });
+
         // Create keyboard shortcuts
         var shortcutNew = new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN);
         var shortcutOpen = new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN);
@@ -140,6 +155,11 @@ public class GrocifyFx extends Application {
         });
 
         tab.setOnCloseRequest(e -> {
+            if (list.isDirty()) {
+                if (!confirmCloseTab()) {
+                    e.consume();
+                }
+            }
         });
 
         return tab;
@@ -297,10 +317,11 @@ public class GrocifyFx extends Application {
             }
             list.setName(listName);
             list.setFile(file);
+            list.setDirty(false);
             return true;
         } catch (IOException | JSONParseException | JSONTypeException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
+            alert.setTitle("Grocify");
             alert.setHeaderText("Error reading file");
             alert.setContentText(e.getMessage());
             alert.show();
@@ -320,7 +341,7 @@ public class GrocifyFx extends Application {
             return true;
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
+            alert.setTitle("Grocify");
             alert.setHeaderText("Error writing file");
             alert.setContentText(e.getMessage());
             alert.show();
@@ -336,5 +357,41 @@ public class GrocifyFx extends Application {
             return fullName.substring(0, lastDot);
         }
         return fullName;
+    }
+
+    private boolean confirmCloseApp() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Grocify");
+        alert.setHeaderText("You have unsaved changes. Are you sure you want to quit?");
+        alert.setContentText("Your changes will be lost if you don't save them.");
+
+        ButtonType btnClose = new ButtonType("Close", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(btnClose, btnCancel);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == btnClose;
+    }
+
+    private boolean confirmCloseTab() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Grocify");
+        alert.setHeaderText("Do you want to save the changes you made to " + currentList.getName() + "?");
+        alert.setContentText("Your changes will be lost if you don't save them.");
+
+        ButtonType btnSave = new ButtonType("Save");
+        ButtonType btnNoSave = new ButtonType("Don't save");
+        ButtonType btnCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(btnSave, btnNoSave, btnCancel);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == btnSave) {
+            actionFileSave();
+            return true;
+        } else {
+            return result.isPresent() && result.get() == btnNoSave;
+        }
     }
 }
