@@ -95,12 +95,10 @@ public class GrocifyFx extends Application {
         addTab("Untitled");
 
         var root = new VBox();
-        root.setSpacing(5);
-        root.setPadding(Insets.EMPTY);
 
         var content = new VBox();
         content.setSpacing(5);
-        content.setPadding(new Insets(10, 5, 5, 10));
+        content.setPadding(new Insets(0, 5, 10, 5));
 
         root.getChildren().addAll(menuBar, content);
         content.getChildren().addAll(tabPane, addBox);
@@ -252,7 +250,12 @@ public class GrocifyFx extends Application {
         }
         var file = fileChooser.showSaveDialog(fileChooserOwnerWindow);
         if (file != null) {
-            saveToFile(file);
+            if (saveToFile(file)) {
+                currentList.setFile(file);
+                var name = getBaseName(file);
+                currentList.setName(name);
+                tabPane.getSelectionModel().getSelectedItem().setText(name);
+            }
         }
     }
 
@@ -285,7 +288,7 @@ public class GrocifyFx extends Application {
         }
     }
 
-    private void saveToFile(File file) {
+    private boolean saveToFile(File file) {
         var arr = new JSONArray();
         currentList.getItems().forEach(e -> arr.add(new JSONObject()
             .put("name", e.getName())
@@ -294,12 +297,14 @@ public class GrocifyFx extends Application {
 
         try (var writer = new PrintWriter(file)) {
             writer.println(arr.toJSONString(new JSONWriterOptions()));
+            return true;
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Error");
             alert.setHeaderText("Error writing file");
             alert.setContentText(e.getMessage());
             alert.show();
+            return false;
         }
     }
 
