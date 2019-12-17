@@ -15,6 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import me.aleksi.jayson.*;
 
 import java.io.File;
@@ -36,6 +37,8 @@ public class GrocifyFx extends Application {
     private final DecimalFormat amountFormat = new DecimalFormat("#");
     private final DecimalFormat priceParseFormat = new DecimalFormat("#.0");
     private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
+
+    private Window fileChooserOwnerWindow;
     private FileChooser fileChooser = new FileChooser();
 
     /**
@@ -71,24 +74,61 @@ public class GrocifyFx extends Application {
         var extFilter = new FileChooser.ExtensionFilter("JSON file (*.json)", "*.json");
         fileChooser.getExtensionFilters().add(extFilter);
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooserOwnerWindow = primaryStage;
 
-        var fileBox = buildSaveLoadBox(primaryStage);
+        var menuBar = buildMenuBar();
+        menuBar.setUseSystemMenuBar(true);
 
         var table = buildGroceryList();
-
         var addBox = buildNewItemBox();
         addBox.prefWidthProperty().bind(primaryStage.widthProperty());
 
         var root = new VBox();
         root.setSpacing(5);
-        root.setPadding(new Insets(10, 5, 5, 10));
+        root.setPadding(Insets.EMPTY);
 
-        root.getChildren().addAll(fileBox, table, addBox);
+        var content = new VBox();
+        content.setSpacing(5);
+        content.setPadding(new Insets(10, 5, 5, 10));
 
+        root.getChildren().addAll(menuBar, content);
+        content.getChildren().addAll(table, addBox);
+
+        VBox.setVgrow(content, Priority.ALWAYS);
         VBox.setVgrow(table, Priority.ALWAYS);
 
         primaryStage.setScene(new Scene(root, 480, 640));
         primaryStage.show();
+    }
+
+    private MenuBar buildMenuBar() {
+        var menuBar = new MenuBar();
+
+        final var fileMenu = new Menu("File");
+
+        var menuOpen = new MenuItem("Open…");
+        var menuSaveAs = new MenuItem("Save As…");
+
+        menuOpen.setOnAction(e -> {
+            var file = fileChooser.showOpenDialog(fileChooserOwnerWindow);
+            if (file != null) {
+                data.clear();
+                loadFile(file);
+            }
+        });
+
+        menuSaveAs.setOnAction(e -> {
+            var file = fileChooser.showSaveDialog(fileChooserOwnerWindow);
+            if (file != null) {
+                saveToFile(file);
+            }
+        });
+
+        fileMenu.getItems().addAll(menuOpen, menuSaveAs);
+
+        menuBar.getMenus().addAll(fileMenu);
+
+        return menuBar;
     }
 
     private TableView<GroceryListItem> buildGroceryList() {
@@ -96,6 +136,9 @@ public class GrocifyFx extends Application {
 
         table.setEditable(true);
         table.setItems(data);
+
+        // Disable focus border on table
+        table.setStyle("-fx-background-color: -fx-box-border, -fx-control-inner-background; -fx-background-insets: 0, 1;");
 
         var nameCol = new TableColumn<GroceryListItem, String>("Name");
         nameCol.setEditable(true);
@@ -216,32 +259,6 @@ public class GrocifyFx extends Application {
         addBox.setSpacing(3);
 
         return addBox;
-    }
-
-    private Pane buildSaveLoadBox(Stage stage) {
-        var fileBox = new HBox();
-
-        var loadButton = new Button("Load from File");
-        loadButton.setOnAction(e -> {
-            var file = fileChooser.showOpenDialog(stage);
-            if (file != null) {
-                data.clear();
-                loadFile(file);
-            }
-        });
-
-        var saveButton = new Button("Save to File");
-        saveButton.setOnAction(e -> {
-            var file = fileChooser.showSaveDialog(stage);
-            if (file != null) {
-                saveToFile(file);
-            }
-        });
-
-        fileBox.getChildren().addAll(loadButton, saveButton);
-        fileBox.setSpacing(3);
-
-        return fileBox;
     }
 
     private boolean loadFile(File file) {

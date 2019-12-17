@@ -27,8 +27,7 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
      * @param textFormatter a {@link javafx.scene.control.TextFormatter} object.
      */
     public EditableCell(TextFormatter<?> textFormatter) {
-        super();
-        setEditable(true);
+        this();
         this.textFormatter = textFormatter;
     }
 
