@@ -350,7 +350,7 @@ public class GrocifyFx extends Application {
             .put("price", e.getPricePerUnit())));
 
         try (var writer = new PrintWriter(file)) {
-            writer.println(arr.toJSONString(new JSONWriterOptions()));
+            writer.println(arr.toJSONString());
             return true;
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
