@@ -9,7 +9,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.TransferMode;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -95,19 +94,6 @@ public class GroceryList extends TableView<GroceryListItem> {
                     setDirty(true);
                 }
             }
-        });
-
-        this.setOnDragOver(e -> {
-            if (e.getGestureSource() != this && e.getDragboard().hasFiles()) {
-                if (e.getDragboard().getFiles().size() == 1) {
-                    var first = e.getDragboard().getFiles().get(0);
-                    var extIdx = first.getName().lastIndexOf('.');
-                    if (extIdx != -1 && first.getName().substring(extIdx).equals(".json")) {
-                        e.acceptTransferModes(TransferMode.COPY);
-                    }
-                }
-            }
-            e.consume();
         });
 
         this.getItems().addListener((ListChangeListener<? super GroceryListItem>) e -> this.setDirty(true));

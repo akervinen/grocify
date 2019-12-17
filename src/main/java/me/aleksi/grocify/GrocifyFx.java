@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -124,11 +125,34 @@ public class GrocifyFx extends Application {
             }
         });
 
+        // Add drag'n'drop for suitable files
+        root.setOnDragOver(e -> {
+            if (e.getGestureSource() != this && e.getDragboard().hasFiles()) {
+                if (e.getDragboard().getFiles().size() == 1) {
+                    var first = e.getDragboard().getFiles().get(0);
+                    var extIdx = first.getName().lastIndexOf('.');
+                    if (extIdx != -1 && first.getName().substring(extIdx).equals(".json")) {
+                        e.acceptTransferModes(TransferMode.COPY);
+                    }
+                }
+            }
+            e.consume();
+        });
+
+        root.setOnDragDropped(e -> {
+            var db = e.getDragboard();
+            var success = false;
+            if (db.hasFiles() && db.getFiles().size() == 1) {
+                success = loadFile(db.getFiles().get(0));
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
         primaryStage.show();
     }
 
-    private Tab addTab(String name) {
-        var list = buildGroceryList();
+    private Tab addTab(String name, GroceryList list) {
         list.setName(name);
 
         var tab = new Tab(name, list);
@@ -154,6 +178,10 @@ public class GrocifyFx extends Application {
         return tab;
     }
 
+    private Tab addTab(String name) {
+        return addTab(name, new GroceryList(name));
+    }
+
     private MenuBar buildMenuBar() {
         var menuBar = new MenuBar();
 
@@ -177,30 +205,18 @@ public class GrocifyFx extends Application {
 
         final var helpMenu = new Menu("_Help");
 
-        var menuHelp = new MenuItem("_Help");
+        var menuHelp = new MenuItem("View _Help");
         var menuAbout = new MenuItem("_About");
 
-        helpMenu.getItems().addAll(menuHelp, menuAbout);
+        menuHelp.setOnAction(e -> showHelpDialog());
+        menuAbout.setOnAction(e -> showAboutDialog());
 
+        menuHelp.setAccelerator(new KeyCodeCombination(KeyCode.F1));
+
+        helpMenu.getItems().addAll(menuHelp, menuAbout);
         menuBar.getMenus().addAll(fileMenu, helpMenu);
 
         return menuBar;
-    }
-
-    private GroceryList buildGroceryList() {
-        var list = new GroceryList();
-
-        list.setOnDragDropped(e -> {
-            var db = e.getDragboard();
-            var success = false;
-            if (db.hasFiles() && db.getFiles().size() == 1) {
-                success = loadFile(db.getFiles().get(0));
-            }
-            e.setDropCompleted(success);
-            e.consume();
-        });
-
-        return list;
     }
 
     private Pane buildNewItemBox() {
@@ -295,10 +311,13 @@ public class GrocifyFx extends Application {
 
     private boolean loadFile(File file) {
         var listName = getBaseName(file);
-        var list = (GroceryList) addTab(listName).getContent();
+        var list = new GroceryList(listName);
+
+        var opts = new JSONReader.ReadOptions();
+        opts.readNumbersAsBigDecimal = true;
 
         try {
-            var res = new JSONReader().parse(Files.readAllBytes(file.toPath()));
+            var res = new JSONReader(opts).parse(Files.readAllBytes(file.toPath()));
             for (var e : res.getArray()) {
                 var o = e.getObject();
                 var name = o.get("name").getString();
@@ -309,9 +328,9 @@ public class GrocifyFx extends Application {
                 var price = (BigDecimal) o.get("price").getNumber();
                 list.getItems().add(new GroceryListItem(name, amount, price));
             }
-            list.setName(listName);
             list.setFile(file);
             list.setDirty(false);
+            addTab(listName, list);
             return true;
         } catch (IOException | JSONParseException | JSONTypeException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -387,5 +406,34 @@ public class GrocifyFx extends Application {
         } else {
             return result.isPresent() && result.get() == btnNoSave;
         }
+    }
+
+    private void showHelpDialog() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Grocify");
+        alert.setHeaderText("How to use Grocify");
+        alert.setContentText("Creating new lists:\n" +
+            "File > New or Ctrl+N to create a new list.\n\n" +
+            "Saving a list:\n" +
+            "File > Save or Ctrl+S to save the current list.\n\n" +
+            "Opening a list:\n" +
+            "File > Open or Ctrl+O to open a saved list in a new tab.\n\n" +
+            "Adding an item:\n" +
+            "Use the text boxes at the bottom of the window to add a new item.\n\n" +
+            "Editing an item:\n" +
+            "Double-click a cell to edit it, then Escape to cancel or Enter to save changes.\n\n" +
+            "Removing an item:\n" +
+            "Select a row and press Delete to delete it.\n");
+
+        alert.showAndWait();
+    }
+
+    private void showAboutDialog() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About Grocify");
+        alert.setHeaderText("Grocify version " + getClass().getPackage().getImplementationVersion());
+        alert.setContentText("By Aleksi Kervinen (akervinen)");
+
+        alert.showAndWait();
     }
 }

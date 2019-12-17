@@ -58,6 +58,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <mainClass>${exec.mainClass}</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
                 </configuration>
