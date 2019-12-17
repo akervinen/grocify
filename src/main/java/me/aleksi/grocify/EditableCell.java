@@ -1,9 +1,6 @@
 package me.aleksi.grocify;
 
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 
 /**
@@ -91,6 +88,7 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
 
     private void createTextField() {
         textField = new TextField(getString());
+        textField.setTextFormatter(textFormatter);
         textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
         textField.setOnKeyPressed(t -> {
             if (t.getCode() == KeyCode.ENTER) {
@@ -99,7 +97,11 @@ public abstract class EditableCell<T> extends TableCell<GroceryListItem, T> {
                 cancelEdit();
             }
         });
-        textField.setTextFormatter(textFormatter);
+        textField.focusedProperty().addListener((value, oldVal, newVal) -> {
+            if (oldVal && !newVal) {
+                commitEdit(fromString(textField.getText()));
+            }
+        });
     }
 
     /**
