@@ -129,8 +129,18 @@ public class GrocifyFx extends Application {
 
         var tab = new Tab(name, list);
         tabPane.getTabs().add(tab);
-
         tabPane.getSelectionModel().select(tab);
+
+        list.dirtyProperty().addListener((ov, oldVal, newVal) -> {
+            if (newVal) {
+                tab.setText("*" + list.getName());
+            } else {
+                tab.setText(list.getName());
+            }
+        });
+
+        tab.setOnCloseRequest(e -> {
+        });
 
         return tab;
     }
@@ -149,10 +159,16 @@ public class GrocifyFx extends Application {
         menuOpen.setOnAction(e -> actionFileOpen());
         menuSave.setOnAction(e -> actionFileSave());
         menuSaveAs.setOnAction(e -> actionFileSaveAs());
-
         fileMenu.getItems().addAll(menuNew, menuOpen, menuSave, menuSaveAs);
 
-        menuBar.getMenus().addAll(fileMenu);
+        final var helpMenu = new Menu("_Help");
+
+        var menuHelp = new MenuItem("_Help");
+        var menuAbout = new MenuItem("_About");
+
+        helpMenu.getItems().addAll(menuHelp, menuAbout);
+
+        menuBar.getMenus().addAll(fileMenu, helpMenu);
 
         return menuBar;
     }
@@ -207,6 +223,7 @@ public class GrocifyFx extends Application {
             }
             var price = addPrice.getLength() > 0 ? new BigDecimal(addPrice.getText()) : null;
             currentList.getItems().add(new GroceryListItem(name, amount, price));
+            currentList.setDirty(true);
 
             addName.clear();
             addAmount.clear();
@@ -238,7 +255,9 @@ public class GrocifyFx extends Application {
             actionFileSaveAs();
             return;
         }
-        saveToFile(file);
+        if (saveToFile(file)) {
+            currentList.setDirty(false);
+        }
     }
 
     private void actionFileSaveAs() {
@@ -254,6 +273,7 @@ public class GrocifyFx extends Application {
                 currentList.setFile(file);
                 var name = getBaseName(file);
                 currentList.setName(name);
+                currentList.setDirty(false);
                 tabPane.getSelectionModel().getSelectedItem().setText(name);
             }
         }

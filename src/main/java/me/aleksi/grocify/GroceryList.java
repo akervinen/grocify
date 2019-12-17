@@ -1,6 +1,9 @@
 package me.aleksi.grocify;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -13,9 +16,10 @@ import java.math.BigDecimal;
 
 public class GroceryList extends TableView<GroceryListItem> {
     private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
-    private boolean hasBeenSaved = false;
     private String name;
     private File file;
+
+    private ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
 
     public GroceryList() {
         this("Untitled");
@@ -41,6 +45,7 @@ public class GroceryList extends TableView<GroceryListItem> {
             }
         });
         nameCol.setOnEditCommit(cee -> {
+            setDirty(true);
             var item = cee.getRowValue();
             item.setName(cee.getNewValue());
             if (item.isEmpty()) {
@@ -58,7 +63,10 @@ public class GroceryList extends TableView<GroceryListItem> {
                 return str.isBlank() ? null : Integer.valueOf(str);
             }
         });
-        amountCol.setOnEditCommit(cee -> cee.getRowValue().setAmount(cee.getNewValue()));
+        amountCol.setOnEditCommit(cee -> {
+            setDirty(true);
+            cee.getRowValue().setAmount(cee.getNewValue());
+        });
 
         var priceCol = new TableColumn<GroceryListItem, BigDecimal>("Price per Unit");
         priceCol.setEditable(true);
@@ -70,7 +78,10 @@ public class GroceryList extends TableView<GroceryListItem> {
                 return str.isBlank() ? null : new BigDecimal(str);
             }
         });
-        priceCol.setOnEditCommit(cee -> cee.getRowValue().setPricePerUnit(cee.getNewValue()));
+        priceCol.setOnEditCommit(cee -> {
+            setDirty(true);
+            cee.getRowValue().setPricePerUnit(cee.getNewValue());
+        });
 
         this.getColumns().add(nameCol);
         this.getColumns().add(amountCol);
@@ -81,6 +92,7 @@ public class GroceryList extends TableView<GroceryListItem> {
                 var idx = this.getSelectionModel().getSelectedIndex();
                 if (idx >= 0) {
                     data.remove(idx);
+                    setDirty(true);
                 }
             }
         });
@@ -97,6 +109,8 @@ public class GroceryList extends TableView<GroceryListItem> {
             }
             e.consume();
         });
+
+        this.getItems().addListener((ListChangeListener<? super GroceryListItem>) e -> this.setDirty(true));
     }
 
     public String getName() {
@@ -116,5 +130,17 @@ public class GroceryList extends TableView<GroceryListItem> {
 
     public void setFile(File file) {
         this.file = file;
+    }
+
+    public boolean isDirty() {
+        return dirty.get();
+    }
+
+    public void setDirty(boolean dirty) {
+        this.dirty.set(dirty);
+    }
+
+    public ObjectProperty<Boolean> dirtyProperty() {
+        return dirty;
     }
 }
