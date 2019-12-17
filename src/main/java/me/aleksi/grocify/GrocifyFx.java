@@ -1,14 +1,9 @@
 package me.aleksi.grocify;
 
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -34,12 +29,14 @@ import java.text.ParsePosition;
  * @version 1.0-SNAPSHOT
  */
 public class GrocifyFx extends Application {
-    private final DecimalFormat amountFormat = new DecimalFormat("#");
-    private final DecimalFormat priceParseFormat = new DecimalFormat("#.0");
-    private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
+    static final DecimalFormat FORMAT_AMOUNT = new DecimalFormat("#");
+    static final DecimalFormat FORMAT_PRICE = new DecimalFormat("#.0");
 
     private Window fileChooserOwnerWindow;
     private FileChooser fileChooser = new FileChooser();
+
+    private TabPane tabPane = new TabPane();
+    private GroceryList currentList;
 
     /**
      * <p>main.</p>
@@ -50,7 +47,7 @@ public class GrocifyFx extends Application {
         launch(args);
     }
 
-    private TextFormatter<?> getFormatter(DecimalFormat format) {
+    static TextFormatter<?> getFormatter(DecimalFormat format) {
         return new TextFormatter<>(change -> {
             if (change.getControlNewText().isEmpty())
                 return change;
@@ -79,9 +76,20 @@ public class GrocifyFx extends Application {
         var menuBar = buildMenuBar();
         menuBar.setUseSystemMenuBar(true);
 
-        var table = buildGroceryList();
         var addBox = buildNewItemBox();
         addBox.prefWidthProperty().bind(primaryStage.widthProperty());
+
+        tabPane.getStyleClass().add("floating");
+        tabPane.getSelectionModel().selectedItemProperty().addListener((ov, oldVal, newVal) -> {
+            if (newVal == null) {
+                currentList = null;
+            } else {
+                currentList = (GroceryList) newVal.getContent();
+            }
+            addBox.getChildren().get(addBox.getChildren().size() - 1).setDisable(newVal == null);
+        });
+
+        addTab("Untitled");
 
         var root = new VBox();
         root.setSpacing(5);
@@ -92,13 +100,23 @@ public class GrocifyFx extends Application {
         content.setPadding(new Insets(10, 5, 5, 10));
 
         root.getChildren().addAll(menuBar, content);
-        content.getChildren().addAll(table, addBox);
+        content.getChildren().addAll(tabPane, addBox);
 
         VBox.setVgrow(content, Priority.ALWAYS);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        VBox.setVgrow(tabPane, Priority.ALWAYS);
 
         primaryStage.setScene(new Scene(root, 480, 640));
         primaryStage.show();
+    }
+
+    private Tab addTab(String name) {
+        var list = buildGroceryList();
+        list.setName(name);
+
+        var tab = new Tab(name, list);
+        tabPane.getTabs().add(tab);
+
+        return tab;
     }
 
     private MenuBar buildMenuBar() {
@@ -106,109 +124,27 @@ public class GrocifyFx extends Application {
 
         final var fileMenu = new Menu("File");
 
+        var menuNew = new MenuItem("New");
         var menuOpen = new MenuItem("Open…");
+        var menuSave = new MenuItem("Save");
         var menuSaveAs = new MenuItem("Save As…");
 
-        menuOpen.setOnAction(e -> {
-            var file = fileChooser.showOpenDialog(fileChooserOwnerWindow);
-            if (file != null) {
-                data.clear();
-                loadFile(file);
-            }
-        });
+        menuNew.setOnAction(e -> actionFileNew());
+        menuOpen.setOnAction(e -> actionFileOpen());
+        menuSave.setOnAction(e -> actionFileSave());
+        menuSaveAs.setOnAction(e -> actionFileSaveAs());
 
-        menuSaveAs.setOnAction(e -> {
-            var file = fileChooser.showSaveDialog(fileChooserOwnerWindow);
-            if (file != null) {
-                saveToFile(file);
-            }
-        });
-
-        fileMenu.getItems().addAll(menuOpen, menuSaveAs);
+        fileMenu.getItems().addAll(menuNew, menuOpen, menuSave, menuSaveAs);
 
         menuBar.getMenus().addAll(fileMenu);
 
         return menuBar;
     }
 
-    private TableView<GroceryListItem> buildGroceryList() {
-        TableView<GroceryListItem> table = new TableView<>();
+    private GroceryList buildGroceryList() {
+        var list = new GroceryList();
 
-        table.setEditable(true);
-        table.setItems(data);
-
-        // Disable focus border on table
-        table.setStyle("-fx-background-color: -fx-box-border, -fx-control-inner-background; -fx-background-insets: 0, 1;");
-
-        var nameCol = new TableColumn<GroceryListItem, String>("Name");
-        nameCol.setEditable(true);
-        nameCol.prefWidthProperty().bind(table.widthProperty().divide(2));
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        nameCol.setCellFactory(tc -> new EditableCell<>() {
-            @Override
-            protected String fromString(String str) {
-                return str;
-            }
-        });
-        nameCol.setOnEditCommit(cee -> {
-            var item = cee.getRowValue();
-            item.setName(cee.getNewValue());
-            if (item.isEmpty()) {
-                data.remove(item);
-            }
-        });
-
-        var amountCol = new TableColumn<GroceryListItem, Integer>("Amount");
-        amountCol.setEditable(true);
-        amountCol.prefWidthProperty().bind(table.widthProperty().divide(4));
-        amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amountCol.setCellFactory(tc -> new EditableCell<>(getFormatter(amountFormat)) {
-            @Override
-            protected Integer fromString(String str) {
-                return str.isBlank() ? null : Integer.valueOf(str);
-            }
-        });
-        amountCol.setOnEditCommit(cee -> cee.getRowValue().setAmount(cee.getNewValue()));
-
-        var priceCol = new TableColumn<GroceryListItem, BigDecimal>("Price per Unit");
-        priceCol.setEditable(true);
-        priceCol.prefWidthProperty().bind(table.widthProperty().divide(4));
-        priceCol.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
-        priceCol.setCellFactory(tc -> new EditableCell<>(getFormatter(priceParseFormat)) {
-            @Override
-            protected BigDecimal fromString(String str) {
-                return str.isBlank() ? null : new BigDecimal(str);
-            }
-        });
-        priceCol.setOnEditCommit(cee -> cee.getRowValue().setPricePerUnit(cee.getNewValue()));
-
-        table.getColumns().add(nameCol);
-        table.getColumns().add(amountCol);
-        table.getColumns().add(priceCol);
-
-        table.setOnKeyPressed(t -> {
-            if (t.getCode() == KeyCode.DELETE) {
-                var idx = table.getSelectionModel().getSelectedIndex();
-                if (idx >= 0) {
-                    data.remove(idx);
-                }
-            }
-        });
-
-        table.setOnDragOver(e -> {
-            if (e.getGestureSource() != table && e.getDragboard().hasFiles()) {
-                if (e.getDragboard().getFiles().size() == 1) {
-                    var first = e.getDragboard().getFiles().get(0);
-                    var extIdx = first.getName().lastIndexOf('.');
-                    if (extIdx != -1 && first.getName().substring(extIdx).equals(".json")) {
-                        e.acceptTransferModes(TransferMode.COPY);
-                    }
-                }
-            }
-            e.consume();
-        });
-
-        table.setOnDragDropped(e -> {
+        list.setOnDragDropped(e -> {
             var db = e.getDragboard();
             var success = false;
             if (db.hasFiles() && db.getFiles().size() == 1) {
@@ -218,7 +154,7 @@ public class GrocifyFx extends Application {
             e.consume();
         });
 
-        return table;
+        return list;
     }
 
     private Pane buildNewItemBox() {
@@ -238,8 +174,8 @@ public class GrocifyFx extends Application {
         addPrice.prefWidthProperty().bind(addBox.prefWidthProperty().multiply(0.2));
         addButton.prefWidthProperty().bind(addBox.prefWidthProperty().multiply(0.2));
 
-        addAmount.setTextFormatter(getFormatter(amountFormat));
-        addPrice.setTextFormatter(getFormatter(priceParseFormat));
+        addAmount.setTextFormatter(getFormatter(FORMAT_AMOUNT));
+        addPrice.setTextFormatter(getFormatter(FORMAT_PRICE));
 
         addButton.setOnAction(e -> {
             var name = addName.getText();
@@ -249,12 +185,12 @@ public class GrocifyFx extends Application {
 
             Integer amount = null;
             try {
-                amount = amountFormat.parse(addAmount.getText()).intValue();
+                amount = FORMAT_AMOUNT.parse(addAmount.getText()).intValue();
             } catch (ParseException ex) {
                 // Should never come here if TextFormatter works right
             }
             var price = addPrice.getLength() > 0 ? new BigDecimal(addPrice.getText()) : null;
-            data.add(new GroceryListItem(name, amount, price));
+            currentList.getItems().add(new GroceryListItem(name, amount, price));
 
             addName.clear();
             addAmount.clear();
@@ -267,7 +203,41 @@ public class GrocifyFx extends Application {
         return addBox;
     }
 
+    private void actionFileNew() {
+        addTab("Untitled");
+    }
+
+    private void actionFileOpen() {
+        var file = fileChooser.showOpenDialog(fileChooserOwnerWindow);
+        if (file != null) {
+            loadFile(file);
+        }
+    }
+
+    private void actionFileSave() {
+        var file = currentList.getFile();
+        if (file == null) {
+            actionFileSaveAs();
+            return;
+        }
+        saveToFile(file);
+    }
+
+    private void actionFileSaveAs() {
+        fileChooser.setInitialFileName(currentList.getName());
+        if (currentList.getFile() != null) {
+            fileChooser.setInitialDirectory(currentList.getFile().getParentFile());
+        }
+        var file = fileChooser.showSaveDialog(fileChooserOwnerWindow);
+        if (file != null) {
+            saveToFile(file);
+        }
+    }
+
     private boolean loadFile(File file) {
+        var listName = getBaseName(file);
+        var list = (GroceryList) addTab(listName).getContent();
+
         try {
             var res = new JSONReader().parse(Files.readAllBytes(file.toPath()));
             for (var e : res.getArray()) {
@@ -278,8 +248,10 @@ public class GrocifyFx extends Application {
                 if (num != null)
                     amount = num.intValue();
                 var price = (BigDecimal) o.get("price").getNumber();
-                data.add(new GroceryListItem(name, amount, price));
+                list.getItems().add(new GroceryListItem(name, amount, price));
             }
+            list.setName(listName);
+            list.setFile(file);
             return true;
         } catch (IOException | JSONParseException | JSONTypeException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -293,7 +265,7 @@ public class GrocifyFx extends Application {
 
     private void saveToFile(File file) {
         var arr = new JSONArray();
-        data.forEach(e -> arr.add(new JSONObject()
+        currentList.getItems().forEach(e -> arr.add(new JSONObject()
             .put("name", e.getName())
             .put("amount", e.getAmount())
             .put("price", e.getPricePerUnit())));
@@ -307,5 +279,15 @@ public class GrocifyFx extends Application {
             alert.setContentText(e.getMessage());
             alert.show();
         }
+    }
+
+    private String getBaseName(File file) {
+        var fullName = file.getName();
+        var lastDot = fullName.lastIndexOf('.');
+
+        if (lastDot != -1) {
+            return fullName.substring(0, lastDot);
+        }
+        return fullName;
     }
 }
