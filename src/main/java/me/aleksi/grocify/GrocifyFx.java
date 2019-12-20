@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -84,6 +85,8 @@ public class GrocifyFx extends Application {
             for (var e : res.getArray()) {
                 loadFile(new File(e.getString()), false);
             }
+        } catch (NoSuchFileException e) {
+            // Ignore this one, it's normal
         } catch (IOException | JSONParseException | JSONTypeException e) {
             e.printStackTrace();
         }
@@ -107,7 +110,7 @@ public class GrocifyFx extends Application {
         try (var writer = new PrintWriter(Path.of(dataPath, SESSION_FILE_NAME).toFile(), StandardCharsets.UTF_8)) {
             writer.write(arr.toJSONString());
         } catch (IOException e) {
-            // Silently ignore since user probably doesn't care or cannot do anything about this.
+            // "Silently" ignore since user probably doesn't care or cannot do anything about this.
             e.printStackTrace();
         }
     }

@@ -6,9 +6,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
+import javafx.scene.input.*;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -22,11 +23,11 @@ import java.math.BigDecimal;
  * @version 1.0-SNAPSHOT
  */
 public class GroceryList extends TableView<GroceryListItem> {
+    private static final DataFormat SERIALIZE_TYPE = new DataFormat("application/x-java-serialized-object");
     private final ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
+    private final ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
     private String name;
     private File file;
-
-    private final ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
 
     /**
      * Create a new untitled GroceryList.
@@ -48,6 +49,59 @@ public class GroceryList extends TableView<GroceryListItem> {
 
         // Disable focus border on table
         this.setStyle("-fx-background-color: -fx-box-border, -fx-control-inner-background; -fx-background-insets: 0, 1;");
+
+        // Setup row drag-n-drop reordering
+        this.setRowFactory(tv -> {
+            var row = new TableRow<GroceryListItem>();
+
+            row.setOnDragDetected(e -> {
+                if (row.isEmpty()) return;
+
+                Integer idx = row.getIndex();
+                Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
+                db.setDragView(row.snapshot(null, null));
+
+                var cc = new ClipboardContent();
+                cc.put(SERIALIZE_TYPE, idx);
+                db.setContent(cc);
+                e.consume();
+            });
+
+            row.setOnDragOver(e -> {
+                var db = e.getDragboard();
+                if (db.hasContent(SERIALIZE_TYPE)
+                    && db.getContent(SERIALIZE_TYPE) instanceof Integer
+                    && !db.getContent(SERIALIZE_TYPE).equals(row.getIndex())) {
+
+                    e.acceptTransferModes(TransferMode.MOVE);
+                    e.consume();
+                }
+            });
+
+            row.setOnDragDropped(e -> {
+                var db = e.getDragboard();
+                if (db.hasContent(SERIALIZE_TYPE) && db.getContent(SERIALIZE_TYPE) instanceof Integer) {
+                    int idx = (Integer) db.getContent(SERIALIZE_TYPE);
+                    var item = tv.getItems().remove(idx);
+
+                    int destIdx;
+
+                    if (row.isEmpty()) {
+                        destIdx = tv.getItems().size();
+                    } else {
+                        destIdx = row.getIndex();
+                    }
+
+                    tv.getItems().add(destIdx, item);
+
+                    e.setDropCompleted(true);
+                    tv.getSelectionModel().select(destIdx);
+                    e.consume();
+                }
+            });
+
+            return row;
+        });
 
         var nameCol = new TableColumn<GroceryListItem, String>("Name");
         nameCol.setEditable(true);
