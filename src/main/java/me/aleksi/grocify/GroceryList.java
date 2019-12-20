@@ -22,11 +22,11 @@ import java.math.BigDecimal;
  * @version 1.0-SNAPSHOT
  */
 public class GroceryList extends TableView<GroceryListItem> {
-    private ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
+    private final ObservableList<GroceryListItem> data = FXCollections.observableArrayList();
     private String name;
     private File file;
 
-    private ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
+    private final ObjectProperty<Boolean> dirty = new SimpleObjectProperty<>(false);
 
     /**
      * Create a new untitled GroceryList.

@@ -40,10 +40,9 @@ public class GrocifyFx extends Application {
     static final DecimalFormat FORMAT_AMOUNT = new DecimalFormat("#");
     static final DecimalFormat FORMAT_PRICE = new DecimalFormat("#.0");
     private static final String SESSION_FILE_NAME = "session.json";
+    private final FileChooser fileChooser = new FileChooser();
+    private final TabPane tabPane = new TabPane();
     private Window fileChooserOwnerWindow;
-    private FileChooser fileChooser = new FileChooser();
-
-    private TabPane tabPane = new TabPane();
     private GroceryList currentList;
 
     /**
