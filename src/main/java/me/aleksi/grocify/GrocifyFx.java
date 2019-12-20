@@ -146,7 +146,7 @@ public class GrocifyFx extends Application {
 
         // Add an empty tab if none were loaded from last session
         if (tabPane.getTabs().size() == 0) {
-            addTab("Untitled");
+            addEmptyTab();
         }
 
         var root = new VBox();
@@ -213,10 +213,12 @@ public class GrocifyFx extends Application {
         primaryStage.show();
     }
 
-    private Tab addTab(String name, GroceryList list) {
-        list.setName(name);
+    private void addEmptyTab() {
+        addTab(new GroceryList());
+    }
 
-        var tab = new Tab(name, list);
+    private Tab addTab(GroceryList list) {
+        var tab = new Tab(list.getName(), list);
         tabPane.getTabs().add(tab);
         tabPane.getSelectionModel().select(tab);
 
@@ -237,10 +239,6 @@ public class GrocifyFx extends Application {
         });
 
         return tab;
-    }
-
-    private Tab addTab(String name) {
-        return addTab(name, new GroceryList(name));
     }
 
     private MenuBar buildMenuBar() {
@@ -328,7 +326,7 @@ public class GrocifyFx extends Application {
     }
 
     private void actionFileNew() {
-        addTab("Untitled");
+        addEmptyTab();
     }
 
     private void actionFileOpen() {
@@ -391,7 +389,7 @@ public class GrocifyFx extends Application {
             }
             list.setFile(file);
             list.setDirty(false);
-            addTab(listName, list);
+            addTab(list);
             return true;
         } catch (IOException | JSONParseException | JSONTypeException e) {
             if (showDialogOnError) {
